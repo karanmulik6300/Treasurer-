@@ -64,30 +64,13 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d8d8df;border-ra
 
 <section id="home" class="page"><div class="cols"><div class="card"><div class="listhead"><h2>💰 जमा झालेली रक्कम</h2><b class="green" id="incomeTotal">₹0</b></div><div id="incomeList"></div></div><div class="card"><div class="listhead"><h2>💸 खर्चाची यादी</h2><b class="red" id="expenseTotal">₹0</b></div><div id="expenseList"></div></div></div></section>
 
-<section id="ledger" class="page hidden">
- <div class="card">
-  <h2>📒 Ledger</h2>
-  <input id="search" placeholder="देणगीदार / खर्च / category / खजिनदार शोधा">
-  <div class="ledger-grid" style="margin-top:14px">
-   <div class="card" style="margin:0">
-    <div class="ledger-head"><h2>💰 जमा</h2><b class="green totalbox" id="ledgerIncomeTotal">₹0</b></div>
-    <div class="muted" style="font-size:13px;margin-bottom:5px">सदस्य वर्गणी + बाहेरील / गावातील देणगी</div>
-    <div id="ledgerIncomeList"></div>
-   </div>
-   <div class="card" style="margin:0">
-    <div class="ledger-head"><h2>💸 खर्च</h2><b class="red totalbox" id="ledgerExpenseTotal">₹0</b></div>
-    <div class="muted" style="font-size:13px;margin-bottom:5px">सर्व खर्चाच्या नोंदी</div>
-    <div id="ledgerExpenseList"></div>
-   </div>
-  </div>
-  <div class="checkbox">
-   <div class="checkrow"><span>एकूण जमा</span><b class="green" id="checkIn">₹0</b></div>
-   <div class="checkrow"><span>एकूण खर्च</span><b class="red" id="checkOut">₹0</b></div>
-   <div class="checkrow"><span>जमा − खर्च = शिल्लक</span><b class="purple" id="checkBal">₹0</b></div>
-   <div class="checkrow"><span>एकूण व्यवहार</span><b id="checkCnt">0</b></div>
-  </div>
- </div>
-</section>
+<section id="ledger" class="page hidden"><div class="card"><h2>📒 Ledger</h2><input id="search" placeholder="देणगीदार / खर्च / category / खजिनदार शोधा">
+<div class="ledger-grid" style="margin-top:14px">
+<div class="card" style="margin:0"><div class="ledger-head"><h2>💰 जमा</h2><b class="green totalbox" id="ledgerIncomeTotal">₹0</b></div><div id="ledgerIncomeList"></div></div>
+<div class="card" style="margin:0"><div class="ledger-head"><h2>💸 खर्च</h2><b class="red totalbox" id="ledgerExpenseTotal">₹0</b></div><div id="ledgerExpenseList"></div></div>
+</div>
+<div class="checkbox"><div class="checkrow"><span>एकूण जमा</span><b class="green" id="checkIn">₹0</b></div><div class="checkrow"><span>एकूण खर्च</span><b class="red" id="checkOut">₹0</b></div><div class="checkrow"><span>शिल्लक</span><b class="purple" id="checkBal">₹0</b></div><div class="checkrow"><span>एकूण व्यवहार</span><b id="checkCnt">0</b></div></div>
+</div></section>
 
 <section id="member" class="page hidden editor"><div class="card"><h2>👥 मंडळाच्या सदस्यांची वर्गणी</h2><div class="formgrid"><div><label>सदस्याचे नाव *</label><input id="mname"></div><div><label>वर्गणी रक्कम *</label><input id="mamount" type="number" min="1"></div><div><label>खजिनदार *</label><select id="mtreasurer"><option value="Karan">करण</option><option value="Dipak">दिपक</option></select></div><div><label>तारीख</label><input id="mdate" type="date"></div><div><label>पेमेंट पद्धत</label><select id="mmode"><option>Cash</option><option>UPI</option><option>Bank</option><option>Cheque</option></select></div><div><label>पावती क्रमांक</label><input id="mreceipt"></div><div><label>नोंद</label><input id="mnote"></div></div><div class="actions"><button class="primary" id="saveMember" type="button">➕ वर्गणी Save</button></div></div></section>
 
@@ -122,29 +105,25 @@ function money(n){return "₹"+Number(n||0).toLocaleString("en-IN",{maximumFract
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 
 function render(){
-  const inc=rows.filter(x=>x.type==="in"), out=rows.filter(x=>x.type==="out");
-  const totalIn=inc.reduce((a,x)=>a+Number(x.amount||0),0), totalOut=out.reduce((a,x)=>a+Number(x.amount||0),0);
-  const balance=totalIn-totalOut;
-  $("tin").textContent=money(totalIn); $("tout").textContent=money(totalOut); $("bal").textContent=money(balance); $("cnt").textContent=rows.length;
-  $("incomeTotal").textContent=money(totalIn); $("expenseTotal").textContent=money(totalOut);
-  $("ledgerIncomeTotal").textContent=money(totalIn); $("ledgerExpenseTotal").textContent=money(totalOut);
-  $("checkIn").textContent=money(totalIn); $("checkOut").textContent=money(totalOut); $("checkBal").textContent=money(balance); $("checkCnt").textContent=rows.length;
-  const sorted=r=>[...r].sort((a,b)=>String(b.transaction_date).localeCompare(String(a.transaction_date)));
-  $("incomeList").innerHTML=sorted(inc).map(item).join("")||'<div class="muted" style="padding:18px">जमा झालेली नोंद नाही.</div>';
-  $("expenseList").innerHTML=sorted(out).map(item).join("")||'<div class="muted" style="padding:18px">खर्चाची नोंद नाही.</div>';
-  const q=($("search").value||"").toLowerCase(), matches=x=>JSON.stringify(x).toLowerCase().includes(q);
-  $("ledgerIncomeList").innerHTML=sorted(inc.filter(matches)).map(item).join("")||'<div class="muted" style="padding:18px">जमा नोंद सापडली नाही.</div>';
-  $("ledgerExpenseList").innerHTML=sorted(out.filter(matches)).map(item).join("")||'<div class="muted" style="padding:18px">खर्च नोंद सापडली नाही.</div>';
+ const inc=rows.filter(x=>x.type==="in"),out=rows.filter(x=>x.type==="out");
+ const totalIn=inc.reduce((a,x)=>a+Number(x.amount||0),0),totalOut=out.reduce((a,x)=>a+Number(x.amount||0),0);
+ $("tin").textContent=money(totalIn);$("tout").textContent=money(totalOut);$("bal").textContent=money(totalIn-totalOut);$("cnt").textContent=rows.length;
+ $("incomeTotal").textContent=money(totalIn);$("expenseTotal").textContent=money(totalOut);
+ $("ledgerIncomeTotal").textContent=money(totalIn);$("ledgerExpenseTotal").textContent=money(totalOut);
+ $("checkIn").textContent=money(totalIn);$("checkOut").textContent=money(totalOut);$("checkBal").textContent=money(totalIn-totalOut);$("checkCnt").textContent=rows.length;
+ const sorted=r=>[...r].sort((a,b)=>String(b.transaction_date).localeCompare(String(a.transaction_date)));
+ $("incomeList").innerHTML=sorted(inc).map(item).join("")||'<div class="muted" style="padding:18px">जमा झालेली नोंद नाही.</div>';
+ $("expenseList").innerHTML=sorted(out).map(item).join("")||'<div class="muted" style="padding:18px">खर्चाची नोंद नाही.</div>';
+ const q=($("search").value||"").toLowerCase(),match=x=>JSON.stringify(x).toLowerCase().includes(q);
+ $("ledgerIncomeList").innerHTML=sorted(inc.filter(match)).map(item).join("")||'<div class="muted" style="padding:18px">जमा नोंद सापडली नाही.</div>';
+ $("ledgerExpenseList").innerHTML=sorted(out.filter(match)).map(item).join("")||'<div class="muted" style="padding:18px">खर्च नोंद सापडली नाही.</div>';
 }
 function item(x){
-  const inc=x.type==="in", title=inc?(x.donor_name||"देणगी"):(x.description||"खर्च");
-  const source=inc?(x.category==="सदस्य वर्गणी"?"सदस्य वर्गणी":"बाहेरील / गावातील देणगी"):x.category;
-  const note=x.bill_no_note||x.mobile_note||"";
-  const split=(note.match(/\b\d[\d,]*\s*(?:CASH|UPI|BANK|CHEQUE)\b/gi)||[]).join(" + ");
-  const payment=split||x.payment_mode||"";
-  const meta=[x.transaction_date,payment,x.receipt_no,x.vendor,x.mobile_note,x.bill_no_note].filter(Boolean).join(" • ");
-  const treasurer=x.treasurer==="Karan"?"करण":x.treasurer==="Dipak"?"दिपक":(x.treasurer||"नाव उपलब्ध नाही");
-  return '<div class="tx"><div class="txrow"><div><div class="txname">'+esc(title)+'</div><div class="small">'+esc(meta)+'</div><span class="sectiontag">'+esc(source||"")+'</span><span class="treasurer">खजिनदार: '+esc(treasurer)+'</span></div><div class="amount '+(inc?"green":"red")+'">'+(inc?"+":"-")+money(x.amount)+'</div></div>'+(editor?'<div class="actions"><button class="danger" onclick="delRow(\''+x.id+'\')">Delete</button></div>':"")+'</div>';
+ const inc=x.type==="in",title=inc?(x.donor_name||"देणगी"):(x.description||"खर्च");
+ const source=inc?(x.category==="सदस्य वर्गणी"?"सदस्य वर्गणी":"बाहेरील / गावातील देणगी"):x.category;
+ const meta=[x.transaction_date,x.payment_mode,x.receipt_no,x.vendor,x.mobile_note,x.bill_no_note].filter(Boolean).join(" • ");
+ const treasurer=x.treasurer==="Karan"?"करण":x.treasurer==="Dipak"?"दिपक":(x.treasurer||"नाव उपलब्ध नाही");
+ return '<div class="tx"><div class="txrow"><div><div class="txname">'+esc(title)+'</div><div class="small">'+esc(meta)+'</div><span class="sectiontag">'+esc(source||"")+'</span><span class="treasurer">खजिनदार: '+esc(treasurer)+'</span></div><div class="amount '+(inc?"green":"red")+'">'+(inc?"+":"-")+money(x.amount)+'</div></div>'+(editor?'<div class="actions"><button class="danger" onclick="delRow(\''+x.id+'\')">Delete</button></div>':"")+'</div>';
 }
 async function load(){
  $("status").className="notice loading"; $("status").textContent="☁️ Cloud data load होत आहे...";
