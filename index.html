@@ -72,6 +72,7 @@ input,select,textarea{width:100%;padding:12px;border:1px solid #d8d8df;border-ra
 <div class="filterbox"><label>पर्यंत तारीख</label><input id="filterTo" type="date"></div>
 <div class="filterbox"><label>किमान रक्कम</label><input id="filterMin" type="number" min="0" placeholder="₹0"></div>
 <div class="filterbox"><label>कमाल रक्कम</label><input id="filterMax" type="number" min="0" placeholder="₹∞"></div>
+<div class="filterbox"><label>क्रमवारी</label><select id="sortBy"><option value="date-desc">तारीख: नवीन → जुनी</option><option value="date-asc">तारीख: जुनी → नवीन</option><option value="amount-desc">रक्कम: जास्त → कमी</option><option value="amount-asc">रक्कम: कमी → जास्त</option></select></div>
 <div class="filter-actions"><button id="clearFilters" type="button">फिल्टर Clear</button></div>
 </div>
 <div class="ledger-grid" style="margin-top:14px">
@@ -130,6 +131,22 @@ function render(){
  $("ledgerIncomeList").innerHTML=sorted(fin).map(item).join("")||'<div class="muted" style="padding:18px">या filter मध्ये जमा नोंद नाही.</div>';
  $("ledgerExpenseList").innerHTML=sorted(fout).map(item).join("")||'<div class="muted" style="padding:18px">या filter मध्ये खर्च नोंद नाही.</div>';
 }
+async function load(){
+  $("status").textContent="☁️ Cloud data load होत आहे...";
+  $("status").className="notice loading";
+  const {data,error}=await db.from("transactions").select("*").eq("mandal_id",MANDAL_ID);
+  if(error){
+    console.error(error);
+    $("status").textContent="❌ Cloud data load झाले नाही: "+error.message;
+    $("status").className="notice error";
+    return;
+  }
+  rows=Array.isArray(data)?data:[];
+  $("status").textContent="✅ Cloud data live आहे • "+rows.length+" व्यवहार";
+  $("status").className="notice ok";
+  render();
+}
+
 function setEditor(v){
  editor=v;
  $("mode").textContent=v?"🔐 खजिनदार मोड":"👀 पाहण्याचा मोड";
@@ -194,8 +211,8 @@ $("login").onclick=doLogin;
 $("password").onkeydown=e=>{if(e.key==="Enter")doLogin()};
 document.querySelectorAll(".tab").forEach(x=>x.onclick=()=>showTab(x.dataset.tab));
 $("search").oninput=render;
-["filterTreasurer","filterType","filterFrom","filterTo","filterMin","filterMax"].forEach(id=>{$(id).oninput=render;$(id).onchange=render});
-$("clearFilters").onclick=()=>{$("search").value="";$("filterTreasurer").value="";$("filterType").value="";$("filterFrom").value="";$("filterTo").value="";$("filterMin").value="";$("filterMax").value="";render()};
+["filterTreasurer","filterType","filterFrom","filterTo","filterMin","filterMax","sortBy"].forEach(id=>{$(id).oninput=render;$(id).onchange=render});
+$("clearFilters").onclick=()=>{$("search").value="";$("filterTreasurer").value="";$("filterType").value="";$("filterFrom").value="";$("filterTo").value="";$("filterMin").value="";$("filterMax").value="";$("sortBy").value="date-desc";render()};
 
 $("saveMember").onclick=()=>{
  const n=$("mname").value.trim(), a=Number($("mamount").value); if(!n||a<=0)return alert("नाव आणि रक्कम भरा.");
